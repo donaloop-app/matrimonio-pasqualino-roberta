@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pasqualino & Roberta — 22 Agosto</title>
+
+<!-- Firebase Database (Firestore — Gratuito, no piano Blaze richiesto) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- QR code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --wine:#54585f;
+    --wine-deep:#2b2d31;
+    --gold:#b8bcc4;
+    --gold-light:#e4e6ea;
+    --olive:#8a8f98;
+    --cream:#f3f4f6;
+    --paper:#ffffff;
+    --ink:#2e2e2e;
+    --stento:#9a9ea6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    background-image:
+      radial-gradient(circle at 10% 15%, rgba(184,188,196,0.18) 0, transparent 45%),
+      radial-gradient(circle at 90% 80%, rgba(46,46,46,0.05) 0, transparent 40%);
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; margin:0; }
+  .script{ font-family:'Caveat', cursive; }
+
+  /* ---------- SETUP BANNER ---------- */
+  .setup-banner{
+    display:none;
+    background:#fff3cd;
+    color:#7a5c00;
+    padding:14px 18px;
+    font-size:0.85rem;
+    text-align:center;
+    border-bottom:2px solid #e6c877;
+  }
+  .setup-banner.show{ display:block; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    padding:64px 20px 48px;
+    text-align:center;
+    background:linear-gradient(180deg, var(--wine) 0%, var(--wine-deep) 100%);
+    color:var(--paper);
+    overflow:hidden;
+  }
+  .hero::before, .hero::after{
+    content:"";
+    position:absolute;
+    width:220px; height:220px;
+    border:1px solid rgba(228,230,234,0.30);
+    border-radius:50%;
+    top:-90px; left:-70px;
+    transform:translateY(calc(var(--parallax, 0) * 1px));
+  }
+  .hero::after{ top:auto; bottom:-100px; right:-80px; left:auto; border-color:rgba(228,230,234,0.18); }
+  .eyebrow{
+    font-family:'Caveat', cursive;
+    font-size:1.4rem;
+    color:var(--gold-light);
+    letter-spacing:0.5px;
+    margin-bottom:6px;
+  }
+  .monogram{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    font-size:clamp(2.6rem, 10vw, 4.6rem);
+    font-weight:600;
+    letter-spacing:1px;
+    line-height:1.08;
+  }
+  .monogram .amp{
+    color:var(--gold-light);
+    font-style:italic;
+    font-weight:400;
+    font-size:0.4em;
+    margin:4px 0;
+  }
+  .hero-sub{
+    margin-top:14px;
+    font-size:1.05rem;
+    opacity:0.92;
+  }
+  .stamp-row{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+  .stamp{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(228,230,234,0.45);
+    border-radius:10px;
+    padding:12px 18px;
+    min-width:130px;
+  }
+  .stamp .label{
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--gold-light);
+    margin-bottom:4px;
+  }
+  .stamp .val{ font-family:'Fraunces',serif; font-size:1.15rem; font-weight:600; }
+  .countdown{
+    margin-top:26px;
+    font-family:'Caveat', cursive;
+    font-size:1.3rem;
+    color:var(--gold-light);
+  }
+
+  /* ---------- NAV ---------- */
+  .tabs{
+    position:sticky; top:0; z-index:20;
+    display:flex;
+    background:var(--paper);
+    border-bottom:2px solid var(--gold);
+    overflow-x:auto;
+  }
+  .tab{
+    flex:1;
+    padding:14px 10px;
+    text-align:center;
+    font-weight:600;
+    font-size:0.85rem;
+    color:var(--ink);
+    opacity:0.55;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+    user-select:none;
+  }
+  .tab.active{
+    opacity:1;
+    color:var(--wine);
+    border-bottom-color:var(--wine);
+  }
+
+  section{ padding:36px 18px; max-width:900px; margin:0 auto; }
+  .section-title{
+    text-align:center;
+    font-size:1.7rem;
+    margin-bottom:6px;
+  }
+  .section-sub{
+    text-align:center;
+    color:#6b6d72;
+    font-size:0.92rem;
+    margin-bottom:26px;
+  }
+
+  /* ---------- UPLOAD ---------- */
+  .upload-card{
+    background:var(--paper);
+    border:1px solid rgba(46,46,46,0.12);
+    border-radius:16px;
+    padding:24px;
+    box-shadow:0 6px 24px rgba(46,46,46,0.07);
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-size:0.78rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    color:var(--wine);
+    margin-bottom:6px;
+  }
+  .field input[type=text]{
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid #d8dade;
+    border-radius:8px;
+    font-size:0.95rem;
+    font-family:'Inter',sans-serif;
+    background:#fff;
+  }
+  .event-choice{ display:flex; gap:10px; }
+  .event-choice button{
+    flex:1;
+    padding:12px;
+    border-radius:10px;
+    border:1.5px solid #d8dade;
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:0.85rem;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .event-choice button.sel{
+    background:var(--wine);
+    color:var(--paper);
+    border-color:var(--wine);
+  }
+  .capture-choice{ display:flex; gap:10px; }
+  .capture-choice button{
+    flex:1;
+    padding:18px 10px;
+    border-radius:12px;
+    border:2px dashed var(--gold);
+    background:rgba(184,188,196,0.10);
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:0.9rem;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .capture-choice button:active{ transform:scale(0.98); }
+  .thumbs-preview{
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;
+  }
+  .thumbs-preview img{
+    width:64px; height:64px; object-fit:cover; border-radius:8px; border:2px solid var(--gold-light);
+  }
+  .btn-primary{
+    width:100%;
+    margin-top:16px;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:var(--wine);
+    color:var(--paper);
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:1.05rem;
+    cursor:pointer;
+  }
+  .btn-primary:disabled{ opacity:0.5; cursor:default; }
+  .status-msg{
+    text-align:center;
+    font-size:0.85rem;
+    margin-top:10px;
+    min-height:18px;
+    color:var(--olive);
+  }
+
+  /* ---------- GALLERY ---------- */
+  .filter-row{
+    display:flex; gap:8px; justify-content:center; margin-bottom:22px; flex-wrap:wrap;
+  }
+  .filter-row button{
+    padding:8px 16px;
+    border-radius:999px;
+    border:1.5px solid var(--wine);
+    background:transparent;
+    color:var(--wine);
+    font-weight:600;
+    font-size:0.8rem;
+    cursor:pointer;
+  }
+  .filter-row button.sel{ background:var(--wine); color:var(--paper); }
+
+  .wall{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(150px,1fr));
+    gap:22px 14px;
+    padding-top:6px;
+  }
+  .polaroid{
+    background:#fff;
+    padding:8px 8px 34px 8px;
+    border-radius:3px;
+    box-shadow:0 6px 14px rgba(46,46,46,0.16);
+    cursor:pointer;
+    transition:transform 0.15s ease;
+    position:relative;
+  }
+  .polaroid:nth-child(4n+1){ transform:rotate(-3deg); }
+  .polaroid:nth-child(4n+2){ transform:rotate(2deg); }
+  .polaroid:nth-child(4n+3){ transform:rotate(-1.5deg); }
+  .polaroid:nth-child(4n+4){ transform:rotate(3deg); }
+  .polaroid:hover{ transform:scale(1.04) rotate(0deg); z-index:5; }
+  .polaroid img{
+    width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#eee;
+  }
+  .polaroid .cap{
+    position:absolute; bottom:6px; left:0; right:0;
+    text-align:center;
+    font-family:'Caveat',cursive;
+    font-size:1rem;
+    color:var(--ink);
+  }
+  .badge-event{
+    position:absolute; top:-8px; right:-6px;
+    font-size:0.58rem; font-weight:700;
+    padding:4px 10px;
+    border-radius:999px;
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    background:#fff;
+    border:1px solid #c8cbd1;
+    color:#5a5d63;
+    box-shadow:0 2px 6px rgba(46,46,46,0.12);
+  }
+  .badge-serenata{ background:#fff; }
+  .badge-matrimonio{ background:#2e2e2e; color:#fff; border-color:#2e2e2e; }
+
+  .empty-state{
+    text-align:center;
+    padding:40px 20px;
+    color:#8a7a63;
+    font-style:italic;
+  }
+
+  /* ---------- MODAL ---------- */
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(20,20,20,0.86);
+    z-index:100; display:none;
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-bg.open{ display:flex; }
+  .modal-box{
+    background:var(--paper);
+    border-radius:14px;
+    max-width:480px; width:100%;
+    max-height:92vh;
+    overflow-y:auto;
+    padding-bottom:6px;
+  }
+  .modal-box img{ width:100%; display:block; border-radius:14px 14px 0 0; }
+  .modal-info{ padding:14px 18px 18px; }
+  .modal-meta{ font-size:0.82rem; color:#6b6d72; margin-bottom:12px; }
+  .close-x{
+    position:absolute; top:14px; right:18px;
+    color:#fff; font-size:1.8rem; cursor:pointer; line-height:1;
+  }
+  .reactions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .react-btn{
+    display:flex; align-items:center; gap:6px;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1.5px solid #d8dade;
+    background:#fff;
+    cursor:pointer;
+    font-size:0.85rem;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+  }
+  .react-btn:active{ transform:scale(0.95); }
+  .react-count{ color:var(--wine); }
+
+  /* ---------- MENU ELIMINA ---------- */
+  .modal-footer{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:14px;
+    position:relative;
+  }
+  .dots-btn{
+    background:none;
+    border:none;
+    font-size:1.4rem;
+    color:#9a9ea6;
+    cursor:pointer;
+    padding:4px 10px;
+    line-height:1;
+  }
+  .dots-menu{
+    display:none;
+    position:absolute;
+    right:0;
+    bottom:36px;
+    background:#fff;
+    border:1px solid #d8dade;
+    border-radius:10px;
+    box-shadow:0 6px 18px rgba(46,46,46,0.18);
+    overflow:hidden;
+    z-index:10;
+  }
+  .dots-menu.open{ display:block; }
+  .dots-menu button{
+    display:block;
+    width:100%;
+    padding:11px 20px;
+    background:none;
+    border:none;
+    text-align:left;
+    font-size:0.88rem;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    color:#b33;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .dots-menu button:hover{ background:#faf0f0; }
+
+  /* ---------- QR ---------- */
+  .qr-card{
+    background:var(--wine);
+    color:var(--paper);
+    border-radius:18px;
+    padding:32px 20px;
+    text-align:center;
+  }
+  .qr-card h3{ font-size:1.4rem; margin-bottom:6px; }
+  .qr-card p{ font-size:0.88rem; opacity:0.9; margin-bottom:20px; }
+  #qrcode{
+    background:#fff;
+    display:inline-block;
+    padding:14px;
+    border-radius:12px;
+  }
+  .qr-note{
+    margin-top:18px;
+    font-size:0.78rem;
+    opacity:0.75;
+    max-width:380px;
+    margin-left:auto; margin-right:auto;
+  }
+
+  footer{
+    text-align:center; padding:30px 20px 50px;
+    font-family:'Caveat',cursive;
+    font-size:1.1rem;
+    color:#8a7a63;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .polaroid{ transition:none; }
+  }
+
+  /* ---------- REVEAL ON SCROLL ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(22px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.in{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* ---------- SHIMMER DIVIDER ---------- */
+  .shimmer-line{
+    height:1px;
+    width:100%;
+    background:linear-gradient(90deg, transparent, rgba(228,230,234,0.9), transparent);
+    background-size:200% 100%;
+    animation:shimmer 5s linear infinite;
+  }
+  @keyframes shimmer{
+    0%{ background-position:200% 0; }
+    100%{ background-position:-200% 0; }
+  }
+
+  .hero-rings{
+    transition:transform 0.15s ease-out;
+  }
+</style>
+</head>
+<body>
+
+<div class="setup-banner" id="setupBanner">
+  ⚠️ Configurazione mancante: apri il file index.html e inserisci i dati del tuo progetto Firebase nella sezione "firebaseConfig" in fondo al codice. Vedi le istruzioni ricevute in chat.
+</div>
+
+<div class="hero">
+  <div class="eyebrow">Ci sposiamo!</div>
+  <h1 class="monogram"><span>Pasqualino</span><span class="amp">&</span><span>Roberta</span></h1>
+  <div class="hero-sub">Santuario di Castel Pedroso</div>
+  <div class="stamp-row">
+    <div class="stamp">
+      <div class="label">Serenata</div>
+      <div class="val">19 Agosto</div>
+    </div>
+    <div class="stamp">
+      <div class="label">Matrimonio</div>
+      <div class="val">22 Agosto</div>
+    </div>
+  </div>
+  <div class="countdown" id="countdown"></div>
+</div>
+<div class="shimmer-line"></div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="carica">📸 Carica</div>
+  <div class="tab" data-tab="galleria">🖼️ Galleria</div>
+  <div class="tab" data-tab="qr">🔗 QR Code</div>
+</div>
+
+<!-- CARICA -->
+<section id="tab-carica">
+  <h2 class="section-title">Aggiungi le tue foto</h2>
+  <p class="section-sub">Serenata, matrimonio, gli scatti belli e quelli venuti male: qui va tutto bene.</p>
+  <div class="upload-card reveal">
+    <div class="field">
+      <label>Che evento è?</label>
+      <div class="event-choice">
+        <button type="button" class="sel" data-ev="Serenata">🎸 Serenata (19/8)</button>
+        <button type="button" data-ev="Matrimonio">💍 Matrimonio (22/8)</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Il tuo nome (facoltativo)</label>
+      <input type="text" id="uploaderName" placeholder="Es. Zio Carmine">
+    </div>
+    <div class="field">
+      <label>Foto</label>
+      <div class="capture-choice">
+        <button type="button" id="btnCamera">📷 Scatta foto</button>
+        <button type="button" id="btnGallery">🖼️ Dalla galleria</button>
+      </div>
+      <input type="file" id="fileInputCamera" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="fileInputGallery" accept="image/*" multiple style="display:none">
+      <div class="thumbs-preview" id="thumbsPreview"></div>
+    </div>
+    <button class="btn-primary" id="uploadBtn" disabled>Carica nella galleria</button>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</section>
+
+<!-- GALLERIA -->
+<section id="tab-galleria" style="display:none;">
+  <h2 class="section-title">Il muro dei ricordi</h2>
+  <p class="section-sub">Tutte le foto caricate da chi c'era, aggiornate in tempo reale. Tocca una foto per ingrandirla e votarla.</p>
+  <div class="filter-row">
+    <button class="sel" data-filter="Tutte">Tutte</button>
+    <button data-filter="Serenata">🎸 Serenata</button>
+    <button data-filter="Matrimonio">💍 Matrimonio</button>
+  </div>
+  <div class="wall" id="wall"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">Ancora nessuna foto qui... sii il primo a caricarne una! 🥲</div>
+</section>
+
+<!-- QR -->
+<section id="tab-qr" style="display:none;">
+  <div class="qr-card reveal">
+    <h3>Inquadra e partecipa</h3>
+    <p>Scannerizza e carica le foto più divertenti! 📸</p>
+    <div id="qrcode"></div>
+  </div>
+</section>
+
+<footer>con affetto, per il grande giorno di Pasqualino & Roberta ✨</footer>
+
+<div class="modal-bg" id="modalBg">
+  <span class="close-x" id="closeModal">&times;</span>
+  <div class="modal-box">
+    <img id="modalImg" src="">
+    <div class="modal-info">
+      <div class="modal-meta" id="modalMeta"></div>
+      <div class="reactions" id="modalReactions"></div>
+      <div class="modal-footer">
+        <button class="dots-btn" id="dotsBtn">⋯</button>
+        <div class="dots-menu" id="dotsMenu">
+          <button type="button" id="deleteBtn">🗑️ Elimina foto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   CONFIGURAZIONE FIREBASE — DA COMPILARE
+   Vai su https://console.firebase.google.com , crea un progetto gratuito,
+   attiva Firestore Database, poi copia qui i valori che trovi
+   in Impostazioni progetto > Le tue app > Configurazione SDK.
+   ====================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCuTh4bOEGa1YswTQ0t1r-d0W1vz1wjUuc",
+  authDomain: "matrimonio-pasqualino-roberta.firebaseapp.com",
+  databaseURL: "https://matrimonio-pasqualino-roberta-default-rtdb.firebaseio.com",
+  projectId: "matrimonio-pasqualino-roberta",
+  storageBucket: "matrimonio-pasqualino-roberta.firebasestorage.app",
+  messagingSenderId: "965651424987",
+  appId: "1:965651424987:web:c6b09b669c28f038d00efe"
+};
+
+let db, firebaseReady = false;
+try{
+  if(firebaseConfig.apiKey !== "INSERISCI_QUI"){
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseReady = true;
+  } else {
+    document.getElementById('setupBanner').classList.add('show');
+  }
+}catch(e){
+  console.error('Firebase init error', e);
+  document.getElementById('setupBanner').classList.add('show');
+}
+
+const REACTIONS = [
+  {key:'bella', emoji:'😍', label:'Bella'},
+  {key:'ridere', emoji:'😂', label:'Da ridere'},
+  {key:'emozione', emoji:'🥹', label:'Emozionante'},
+  {key:'stento', emoji:'😅', label:'Foto di stento'}
+];
+
+let currentEvent = 'Serenata';
+let selectedFiles = [];
+let galleryItems = [];
+let currentFilter = 'Tutte';
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    ['carica','galleria','qr'].forEach(name=>{
+      document.getElementById('tab-'+name).style.display = (name===t.dataset.tab) ? 'block':'none';
+    });
+    if(t.dataset.tab === 'qr') renderQR();
+    if(t.dataset.tab === 'galleria') renderWall();
+  });
+});
+
+// ---------- COUNTDOWN ----------
+function updateCountdown(){
+  const now = new Date();
+  const wedding = new Date('2026-08-22T11:00:00');
+  const serenata = new Date('2026-08-19T21:00:00');
+  const el = document.getElementById('countdown');
+  let target = now < serenata ? serenata : wedding;
+  let label = now < serenata ? 'alla serenata' : (now < wedding ? 'al matrimonio' : null);
+  if(!label){ el.textContent = "È stato un giorno bellissimo! 🥂"; return; }
+  const diff = target - now;
+  if(diff <= 0){ el.textContent = "È il grande giorno! 🎉"; return; }
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor((diff%86400000)/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  el.textContent = `Mancano ${d}g ${h}h ${m}m ${label}`;
+}
+updateCountdown();
+setInterval(updateCountdown, 60000);
+
+// ---------- EVENT CHOICE ----------
+document.querySelectorAll('.event-choice button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.event-choice button').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    currentEvent = b.dataset.ev;
+  });
+});
+
+// ---------- CAMERA / GALLERIA ----------
+const fileInputCamera = document.getElementById('fileInputCamera');
+const fileInputGallery = document.getElementById('fileInputGallery');
+document.getElementById('btnCamera').addEventListener('click', ()=> fileInputCamera.click());
+document.getElementById('btnGallery').addEventListener('click', ()=> fileInputGallery.click());
+fileInputCamera.addEventListener('change', (e)=>{ addFiles(Array.from(e.target.files)); });
+fileInputGallery.addEventListener('change', (e)=>{ addFiles(Array.from(e.target.files)); });
+
+function addFiles(files){
+  selectedFiles = selectedFiles.concat(files);
+  renderThumbsPreview();
+}
+
+function renderThumbsPreview(){
+  const wrap = document.getElementById('thumbsPreview');
+  wrap.innerHTML = '';
+  document.getElementById('uploadBtn').disabled = selectedFiles.length===0;
+  selectedFiles.forEach(f=>{
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    wrap.appendChild(img);
+  });
+}
+
+// ---------- CONVERSIONE FOTO IN BASE64 (SALVATAGGIO DIRETTO IN FIRESTORE) ----------
+function convertImageToBase64(file, maxDim=1024, quality=0.7){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h && w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; }
+        else if(h >= w && h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---------- UPLOAD ----------
+document.getElementById('uploadBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('uploadBtn');
+  const status = document.getElementById('statusMsg');
+
+  if(!firebaseReady){
+    status.style.color = '#b33';
+    status.textContent = 'Database non configurato: manca la configurazione Firebase nel codice del sito.';
+    return;
+  }
+
+  btn.disabled = true;
+  status.style.color = '';
+  const uploader = document.getElementById('uploaderName').value.trim() || 'Anonimo';
+  let done = 0, lastError = '';
+
+  for(const file of selectedFiles){
+    status.textContent = `Carico ${done+1} di ${selectedFiles.length}...`;
+    try{
+      const base64Image = await convertImageToBase64(file);
+      const id = 'p' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      await db.collection('photos').doc(id).set({
+        event: currentEvent,
+        uploader: uploader,
+        url: base64Image,
+        ts: Date.now(),
+        reactions: { bella:0, ridere:0, emozione:0, stento:0 }
+      });
+      done++;
+    }catch(err){
+      console.error('upload error', err);
+      lastError = (err && err.message) ? err.message : String(err);
+    }
+  }
+
+  if(done > 0){
+    status.style.color = '';
+    status.textContent = `Fatto! ${done} foto aggiunte alla galleria 🎉`;
+  } else {
+    status.style.color = '#b33';
+    status.textContent = `Non sono riuscito a caricare le foto. Errore: ${lastError || 'sconosciuto'}`;
+  }
+  selectedFiles = [];
+  fileInputCamera.value = '';
+  fileInputGallery.value = '';
+  renderThumbsPreview();
+  if(done > 0) setTimeout(()=>{ status.textContent=''; }, 4000);
+  btn.disabled = false;
+});
+
+// ---------- GALLERY (realtime) ----------
+document.querySelectorAll('.filter-row button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-row button').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    currentFilter = b.dataset.filter;
+    renderWall();
+  });
+});
+
+let unsubscribeGallery = null;
+function startGalleryListener(){
+  if(!firebaseReady || unsubscribeGallery) return;
+  unsubscribeGallery = db.collection('photos').orderBy('ts','desc').onSnapshot(snap=>{
+    galleryItems = snap.docs.map(d=> ({ id: d.id, ...d.data() }));
+    renderWall();
+  }, err=>{
+    console.error('gallery listener error', err);
+  });
+}
+
+function renderWall(){
+  const wall = document.getElementById('wall');
+  const empty = document.getElementById('emptyState');
+  wall.innerHTML = '';
+  const items = galleryItems.filter(it => currentFilter==='Tutte' || it.event===currentFilter);
+  if(items.length===0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  for(const item of items){
+    const card = document.createElement('div');
+    card.className = 'polaroid reveal';
+    card.innerHTML = `
+      <span class="badge-event ${item.event==='Serenata'?'badge-serenata':'badge-matrimonio'}">${item.event}</span>
+      <img src="${item.url}" alt="foto" loading="lazy">
+      <div class="cap">${item.uploader}</div>
+    `;
+    card.addEventListener('click', ()=> openModal(item.id));
+    wall.appendChild(card);
+  }
+}
+
+// ---------- MODAL ----------
+const modalBg = document.getElementById('modalBg');
+document.getElementById('closeModal').addEventListener('click', ()=> modalBg.classList.remove('open'));
+modalBg.addEventListener('click', (e)=>{ if(e.target===modalBg) modalBg.classList.remove('open'); });
+
+let openPhotoId = null;
+
+function openModal(id){
+  const item = galleryItems.find(x=>x.id===id);
+  if(!item) return;
+  openPhotoId = id;
+  modalBg.classList.add('open');
+  document.getElementById('modalImg').src = item.url;
+  document.getElementById('modalMeta').textContent = `${item.event} · caricata da ${item.uploader}`;
+  document.getElementById('dotsMenu').classList.remove('open');
+  renderReactions(item);
+}
+
+document.getElementById('dotsBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('dotsMenu').classList.toggle('open');
+});
+document.addEventListener('click', (e)=>{
+  const menu = document.getElementById('dotsMenu');
+  if(menu.classList.contains('open') && !menu.contains(e.target) && e.target.id !== 'dotsBtn'){
+    menu.classList.remove('open');
+  }
+});
+
+document.getElementById('deleteBtn').addEventListener('click', async ()=>{
+  document.getElementById('dotsMenu').classList.remove('open');
+  const target = galleryItems.find(x=> x.id === openPhotoId);
+  if(!target) return;
+
+  const parola = window.prompt('Per eliminare questa foto, scrivi la parola speciale:');
+  if(parola === null) return; // annullato
+  if(parola.trim().toLowerCase() !== 'oscar'){
+    alert('Parola sbagliata. La foto non è stata eliminata.');
+    return;
+  }
+  try{
+    await db.collection('photos').doc(target.id).delete();
+    modalBg.classList.remove('open');
+  }catch(err){
+    console.error('delete error', err);
+    alert('Errore durante l\'eliminazione: ' + (err.message || err));
+  }
+});
+
+function renderReactions(item){
+  const wrap = document.getElementById('modalReactions');
+  wrap.innerHTML = '';
+  REACTIONS.forEach(r=>{
+    const btn = document.createElement('button');
+    btn.className = 'react-btn';
+    btn.innerHTML = `${r.emoji} ${r.label} <span class="react-count">${(item.reactions && item.reactions[r.key]) || 0}</span>`;
+    btn.addEventListener('click', ()=> react(item.id, r.key));
+    wrap.appendChild(btn);
+  });
+}
+
+async function react(id, key){
+  if(!firebaseReady) return;
+  try{
+    await db.collection('photos').doc(id).update({
+      ['reactions.' + key]: firebase.firestore.FieldValue.increment(1)
+    });
+  }catch(e){ console.error('react error', e); }
+}
+
+// ---------- QR ----------
+function renderQR(){
+  const el = document.getElementById('qrcode');
+  el.innerHTML = '';
+  try{
+    new QRCode(el, {
+      text: window.location.href,
+      width: 220,
+      height: 220,
+      colorDark: '#2e2e2e',
+      colorLight: '#ffffff'
+    });
+  }catch(e){
+    el.innerHTML = '<div style="color:#2e2e2e;padding:20px;">QR non disponibile.</div>';
+  }
+}
+
+// ---------- INIT ----------
+startGalleryListener();
+
+// ---------- REVEAL ON SCROLL ----------
+const revealObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('in');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+function observeReveals(){
+  document.querySelectorAll('.reveal:not(.in)').forEach(el=> revealObserver.observe(el));
+}
+observeReveals();
+// riosserva ogni volta che la galleria si aggiorna (nuove foto realtime)
+const wallObserver = new MutationObserver(observeReveals);
+wallObserver.observe(document.getElementById('wall'), { childList:true });
+
+// ---------- PARALLAX HEADER ----------
+const heroEl = document.querySelector('.hero');
+window.addEventListener('scroll', ()=>{
+  const y = Math.min(window.scrollY, 400);
+  heroEl.style.setProperty('--parallax', (y * 0.18).toFixed(1));
+}, { passive: true });
+</script>
+
+</body>
+</html>
