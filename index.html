@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pasqualino & Roberta — 22 Agosto</title>
 
-<!-- Firebase Database (Firestore — Gratuito, no piano Blaze richiesto) -->
+<!-- Firebase (solo database, gratuito - niente Storage per evitare il piano a pagamento) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <!-- QR code -->
@@ -471,13 +471,13 @@
 <body>
 
 <div class="setup-banner" id="setupBanner">
-  ⚠️ Configurazione mancante: apri il file index.html e inserisci i dati del tuo progetto Firebase nella sezione "firebaseConfig" in fondo al codice. Vedi le istruzioni ricevute in chat.
+  ⚠️ Configurazione mancante: apri il file index.html e inserisci i dati del progetto Firebase e del repository GitHub nella parte finale del codice. Vedi le istruzioni ricevute in chat.
 </div>
 
 <div class="hero">
   <div class="eyebrow">Ci sposiamo!</div>
   <h1 class="monogram"><span>Pasqualino</span><span class="amp">&</span><span>Roberta</span></h1>
-  <div class="hero-sub">Santuario di Castel Pedroso</div>
+  <div class="hero-sub">Santuario di Castelpetroso</div>
   <div class="stamp-row">
     <div class="stamp">
       <div class="label">Serenata</div>
@@ -515,13 +515,19 @@
       <input type="text" id="uploaderName" placeholder="Es. Zio Carmine">
     </div>
     <div class="field">
-      <label>Foto</label>
+      <label>Foto e video</label>
       <div class="capture-choice">
         <button type="button" id="btnCamera">📷 Scatta foto</button>
-        <button type="button" id="btnGallery">🖼️ Dalla galleria</button>
+        <button type="button" id="btnGallery">🖼️ Foto dalla galleria</button>
+      </div>
+      <div class="capture-choice" style="margin-top:10px;">
+        <button type="button" id="btnVideoCamera">🎥 Registra video</button>
+        <button type="button" id="btnVideoGallery">🎬 Video dalla galleria</button>
       </div>
       <input type="file" id="fileInputCamera" accept="image/*" capture="environment" style="display:none">
       <input type="file" id="fileInputGallery" accept="image/*" multiple style="display:none">
+      <input type="file" id="fileInputVideoCamera" accept="video/*" capture="environment" style="display:none">
+      <input type="file" id="fileInputVideoGallery" accept="video/*" multiple style="display:none">
       <div class="thumbs-preview" id="thumbsPreview"></div>
     </div>
     <button class="btn-primary" id="uploadBtn" disabled>Carica nella galleria</button>
@@ -557,13 +563,14 @@
   <span class="close-x" id="closeModal">&times;</span>
   <div class="modal-box">
     <img id="modalImg" src="">
+    <video id="modalVideo" controls playsinline style="width:100%;display:none;border-radius:14px 14px 0 0;background:#000;"></video>
     <div class="modal-info">
       <div class="modal-meta" id="modalMeta"></div>
       <div class="reactions" id="modalReactions"></div>
       <div class="modal-footer">
         <button class="dots-btn" id="dotsBtn">⋯</button>
         <div class="dots-menu" id="dotsMenu">
-          <button type="button" id="deleteBtn">🗑️ Elimina foto</button>
+          <button type="button" id="deleteBtn">🗑️ Elimina</button>
         </div>
       </div>
     </div>
@@ -572,20 +579,44 @@
 
 <script>
 /* ======================================================================
-   CONFIGURAZIONE FIREBASE — DA COMPILARE
-   Vai su https://console.firebase.google.com , crea un progetto gratuito,
-   attiva Firestore Database, poi copia qui i valori che trovi
-   in Impostazioni progetto > Le tue app > Configurazione SDK.
+   CONFIGURAZIONE FIREBASE — DA COMPILARE (dati leggeri: chi ha caricato,
+   reazioni, tipo di evento). Vai su https://console.firebase.google.com ,
+   crea un progetto gratuito, attiva SOLO Firestore Database (niente
+   Storage, così resti sempre gratis senza carta di credito), poi copia
+   qui i valori che trovi in Impostazioni progetto > Le tue app >
+   Configurazione SDK.
    ====================================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyCuTh4bOEGa1YswTQ0t1r-d0W1vz1wjUuc",
   authDomain: "matrimonio-pasqualino-roberta.firebaseapp.com",
-  databaseURL: "https://matrimonio-pasqualino-roberta-default-rtdb.firebaseio.com",
   projectId: "matrimonio-pasqualino-roberta",
   storageBucket: "matrimonio-pasqualino-roberta.firebasestorage.app",
   messagingSenderId: "965651424987",
   appId: "1:965651424987:web:c6b09b669c28f038d00efe"
 };
+
+/* ======================================================================
+   CONFIGURAZIONE GITHUB — DA COMPILARE (qui vengono salvati i file veri
+   di foto e video, gratis, nessuna carta richiesta mai).
+   1. Crea un account GitHub gratuito su https://github.com
+   2. Crea un nuovo repository VUOTO, es. "foto-matrimonio" (può essere
+      privato o pubblico, scegli tu)
+   3. Vai su https://github.com/settings/tokens?type=beta e crea un
+      "Fine-grained personal access token":
+        - Repository access: "Only select repositories" → scegli SOLO
+          quel repository (mai "All repositories")
+        - Permissions: "Contents" → Read and write
+      Copia il token (inizia con "github_pat_...") — si vede una sola
+      volta, salvalo da qualche parte.
+   4. Compila i campi qui sotto con i tuoi dati.
+   ====================================================================== */
+const GITHUB_CONFIG = {
+  owner:  "donaloop-app",   // il tuo nome utente GitHub, es. "davide93"
+  repo:   "foto-matrimonio",   // il nome del repository, es. "foto-matrimonio"
+  branch: "main",
+  token:  "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"    // il token creato al punto 3
+};
+const githubReady = GITHUB_CONFIG.owner !== "INSERISCI_QUI" && GITHUB_CONFIG.token !== "INSERISCI_QUI";
 
 let db, firebaseReady = false;
 try{
@@ -598,6 +629,9 @@ try{
   }
 }catch(e){
   console.error('Firebase init error', e);
+  document.getElementById('setupBanner').classList.add('show');
+}
+if(!githubReady){
   document.getElementById('setupBanner').classList.add('show');
 }
 
@@ -657,10 +691,16 @@ document.querySelectorAll('.event-choice button').forEach(b=>{
 // ---------- CAMERA / GALLERIA ----------
 const fileInputCamera = document.getElementById('fileInputCamera');
 const fileInputGallery = document.getElementById('fileInputGallery');
+const fileInputVideoCamera = document.getElementById('fileInputVideoCamera');
+const fileInputVideoGallery = document.getElementById('fileInputVideoGallery');
 document.getElementById('btnCamera').addEventListener('click', ()=> fileInputCamera.click());
 document.getElementById('btnGallery').addEventListener('click', ()=> fileInputGallery.click());
+document.getElementById('btnVideoCamera').addEventListener('click', ()=> fileInputVideoCamera.click());
+document.getElementById('btnVideoGallery').addEventListener('click', ()=> fileInputVideoGallery.click());
 fileInputCamera.addEventListener('change', (e)=>{ addFiles(Array.from(e.target.files)); });
 fileInputGallery.addEventListener('change', (e)=>{ addFiles(Array.from(e.target.files)); });
+fileInputVideoCamera.addEventListener('change', (e)=>{ addFiles(Array.from(e.target.files)); });
+fileInputVideoGallery.addEventListener('change', (e)=>{ addFiles(Array.from(e.target.files)); });
 
 function addFiles(files){
   selectedFiles = selectedFiles.concat(files);
@@ -672,14 +712,21 @@ function renderThumbsPreview(){
   wrap.innerHTML = '';
   document.getElementById('uploadBtn').disabled = selectedFiles.length===0;
   selectedFiles.forEach(f=>{
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(f);
-    wrap.appendChild(img);
+    if(f.type.startsWith('video/')){
+      const box = document.createElement('div');
+      box.style.cssText = 'width:64px;height:64px;border-radius:8px;border:2px solid var(--gold-light);background:#2e2e2e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;';
+      box.textContent = '🎥';
+      wrap.appendChild(box);
+    } else {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      wrap.appendChild(img);
+    }
   });
 }
 
-// ---------- CONVERSIONE FOTO IN BASE64 (SALVATAGGIO DIRETTO IN FIRESTORE) ----------
-function convertImageToBase64(file, maxDim=1024, quality=0.7){
+// ---------- COMPRESSIONE IMMAGINI (i video non vengono compressi) ----------
+function compressImage(file, maxDim=1600, quality=0.8){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
     reader.onload = (e)=>{
@@ -693,7 +740,7 @@ function convertImageToBase64(file, maxDim=1024, quality=0.7){
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
-      img.onerror = reject;
+      img.onerror = ()=> reject(new Error('Formato immagine non leggibile dal browser (es. alcune foto HEIC di iPhone). Prova a scattarla di nuovo o a scegliere un\'altra foto.'));
       img.src = e.target.result;
     };
     reader.onerror = reject;
@@ -701,14 +748,80 @@ function convertImageToBase64(file, maxDim=1024, quality=0.7){
   });
 }
 
+function readFileAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=> resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function withTimeout(promise, ms, msg){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=> setTimeout(()=> reject(new Error(msg)), ms))
+  ]);
+}
+
+// ---------- CARICAMENTO SU GITHUB (file vero) ----------
+function uploadToGithub(path, base64Only, onProgress){
+  return new Promise((resolve, reject)=>{
+    const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`;
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Authorization', `token ${GITHUB_CONFIG.token}`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.upload.onprogress = (e)=>{
+      if(e.lengthComputable && onProgress) onProgress(Math.round((e.loaded/e.total)*100));
+    };
+    xhr.onload = ()=>{
+      if(xhr.status>=200 && xhr.status<300){
+        const rawUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/${path}`;
+        resolve(rawUrl);
+      } else {
+        reject(new Error(`GitHub ha rifiutato il caricamento (${xhr.status}). Controlla owner/repo/token nella configurazione.`));
+      }
+    };
+    xhr.onerror = ()=> reject(new Error('Errore di rete durante il caricamento su GitHub.'));
+    xhr.send(JSON.stringify({
+      message: `upload ${path}`,
+      content: base64Only,
+      branch: GITHUB_CONFIG.branch
+    }));
+  });
+}
+
+async function deleteFromGithub(path){
+  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}?ref=${GITHUB_CONFIG.branch}`;
+  const getRes = await fetch(url, { headers: { Authorization: `token ${GITHUB_CONFIG.token}` } });
+  if(!getRes.ok) return; // già assente, va bene comunque
+  const info = await getRes.json();
+  await fetch(url, {
+    method: 'DELETE',
+    headers: { Authorization: `token ${GITHUB_CONFIG.token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ message: `delete ${path}`, sha: info.sha, branch: GITHUB_CONFIG.branch })
+  });
+}
+
+const MAX_VIDEO_BYTES = 60 * 1024 * 1024; // 60 MB, oltre diventa lento/rischioso da caricare da telefono
+
+function extFromFile(file, isVideo){
+  if(isVideo){
+    const m = /\.([a-zA-Z0-9]+)$/.exec(file.name || '');
+    return m ? m[1].toLowerCase() : (file.type.split('/')[1] || 'mp4');
+  }
+  return 'jpg';
+}
+
 // ---------- UPLOAD ----------
 document.getElementById('uploadBtn').addEventListener('click', async ()=>{
   const btn = document.getElementById('uploadBtn');
   const status = document.getElementById('statusMsg');
 
-  if(!firebaseReady){
+  if(!firebaseReady || !githubReady){
     status.style.color = '#b33';
-    status.textContent = 'Database non configurato: manca la configurazione Firebase nel codice del sito.';
+    status.textContent = 'Configurazione mancante: completa sia Firebase che GitHub nel codice del sito.';
     return;
   }
 
@@ -718,14 +831,39 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
   let done = 0, lastError = '';
 
   for(const file of selectedFiles){
-    status.textContent = `Carico ${done+1} di ${selectedFiles.length}...`;
+    const isVideo = file.type.startsWith('video/');
+
+    if(isVideo && file.size > MAX_VIDEO_BYTES){
+      lastError = `Il video "${file.name}" è troppo pesante (oltre 60MB). Scegline uno più corto o comprimilo prima.`;
+      continue;
+    }
+
+    status.textContent = `Carico ${done+1} di ${selectedFiles.length} — preparazione...`;
     try{
-      const base64Image = await convertImageToBase64(file);
+      const dataUrl = await withTimeout(
+        isVideo ? readFileAsDataURL(file) : compressImage(file),
+        45000,
+        'Tempo scaduto durante la preparazione del file. Riprova con una connessione migliore o un file più leggero.'
+      );
+      const base64Only = dataUrl.split(',')[1];
       const id = 'p' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      const ext = extFromFile(file, isVideo);
+      const path = `media/${id}.${ext}`;
+
+      const mediaUrl = await withTimeout(
+        uploadToGithub(path, base64Only, (pct)=>{
+          status.textContent = `Carico ${done+1} di ${selectedFiles.length} — ${pct}%`;
+        }),
+        60000,
+        'Tempo scaduto durante il caricamento su GitHub. Riprova.'
+      );
+
       await db.collection('photos').doc(id).set({
         event: currentEvent,
         uploader: uploader,
-        url: base64Image,
+        mediaType: isVideo ? 'video' : 'image',
+        mediaUrl: mediaUrl,
+        mediaPath: path,
         ts: Date.now(),
         reactions: { bella:0, ridere:0, emozione:0, stento:0 }
       });
@@ -736,18 +874,23 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
     }
   }
 
-  if(done > 0){
+  if(done > 0 && !lastError){
     status.style.color = '';
-    status.textContent = `Fatto! ${done} foto aggiunte alla galleria 🎉`;
+    status.textContent = `Fatto! ${done} file aggiunti alla galleria 🎉`;
+  } else if(done > 0){
+    status.style.color = '#b33';
+    status.textContent = `${done} file caricati, ma con un problema: ${lastError}`;
   } else {
     status.style.color = '#b33';
-    status.textContent = `Non sono riuscito a caricare le foto. Errore: ${lastError || 'sconosciuto'}`;
+    status.textContent = `Non sono riuscito a caricare. Errore: ${lastError || 'sconosciuto'}`;
   }
   selectedFiles = [];
   fileInputCamera.value = '';
   fileInputGallery.value = '';
+  fileInputVideoCamera.value = '';
+  fileInputVideoGallery.value = '';
   renderThumbsPreview();
-  if(done > 0) setTimeout(()=>{ status.textContent=''; }, 4000);
+  if(done > 0 && !lastError) setTimeout(()=>{ status.textContent=''; }, 4000);
   btn.disabled = false;
 });
 
@@ -785,9 +928,13 @@ function renderWall(){
   for(const item of items){
     const card = document.createElement('div');
     card.className = 'polaroid reveal';
+    const mediaHtml = item.mediaType === 'video'
+      ? `<video src="${item.mediaUrl}" muted playsinline preload="metadata" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#111;"></video>
+         <span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:0.7rem;padding:3px 8px;border-radius:999px;">▶ video</span>`
+      : `<img src="${item.mediaUrl}" alt="foto" loading="lazy">`;
     card.innerHTML = `
       <span class="badge-event ${item.event==='Serenata'?'badge-serenata':'badge-matrimonio'}">${item.event}</span>
-      <img src="${item.url}" alt="foto" loading="lazy">
+      ${mediaHtml}
       <div class="cap">${item.uploader}</div>
     `;
     card.addEventListener('click', ()=> openModal(item.id));
@@ -797,8 +944,8 @@ function renderWall(){
 
 // ---------- MODAL ----------
 const modalBg = document.getElementById('modalBg');
-document.getElementById('closeModal').addEventListener('click', ()=> modalBg.classList.remove('open'));
-modalBg.addEventListener('click', (e)=>{ if(e.target===modalBg) modalBg.classList.remove('open'); });
+document.getElementById('closeModal').addEventListener('click', ()=>{ modalBg.classList.remove('open'); document.getElementById('modalVideo').pause(); });
+modalBg.addEventListener('click', (e)=>{ if(e.target===modalBg){ modalBg.classList.remove('open'); document.getElementById('modalVideo').pause(); } });
 
 let openPhotoId = null;
 
@@ -807,7 +954,20 @@ function openModal(id){
   if(!item) return;
   openPhotoId = id;
   modalBg.classList.add('open');
-  document.getElementById('modalImg').src = item.url;
+  const imgEl = document.getElementById('modalImg');
+  const videoEl = document.getElementById('modalVideo');
+  if(item.mediaType === 'video'){
+    imgEl.style.display = 'none';
+    imgEl.src = '';
+    videoEl.style.display = 'block';
+    videoEl.src = item.mediaUrl;
+  } else {
+    videoEl.pause();
+    videoEl.style.display = 'none';
+    videoEl.src = '';
+    imgEl.style.display = 'block';
+    imgEl.src = item.mediaUrl;
+  }
   document.getElementById('modalMeta').textContent = `${item.event} · caricata da ${item.uploader}`;
   document.getElementById('dotsMenu').classList.remove('open');
   renderReactions(item);
@@ -836,6 +996,7 @@ document.getElementById('deleteBtn').addEventListener('click', async ()=>{
     return;
   }
   try{
+    if(target.mediaPath) await deleteFromGithub(target.mediaPath).catch(()=>{});
     await db.collection('photos').doc(target.id).delete();
     modalBg.classList.remove('open');
   }catch(err){
